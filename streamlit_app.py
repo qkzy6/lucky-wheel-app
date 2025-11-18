@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 10 - "选择指示器"版)
+# (版本 11 - 移除默认金框, 完美居中)
 
 import streamlit as st
 import random
@@ -40,9 +40,8 @@ def create_wheel_app():
         
         stop_index = (base_len * 2) + chosen_base_index
         
-        # 计算 JS 最终需要停止的位置
-        # 注意这里我们不再需要 centering_offset，因为指示框会处理居中
-        final_position = -(stop_index * item_height_px) 
+        # (Python) 计算 JS 最终需要停止的位置 (对齐顶部)
+        final_position_top_aligned = -(stop_index * item_height_px) 
 
         # --- HTML/CSS/JS ---
         reel_items_html = ""
@@ -55,14 +54,16 @@ def create_wheel_app():
                 width: 100%; height: {container_height}px;
                 overflow: hidden; border: 2px solid #444; border-radius: 5px;
                 background: #f9f9f9; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-                position: relative; /* 🔴 改动点 1 (A): 容器需要相对定位 */
+                position: relative; /* 容器需要相对定位 */
             }}
             .reel {{ 
-                position: absolute; /* 🔴 改动点 1 (B): 滚筒需要绝对定位 */
-                width: 100%;
-                top: 0;
-                left: 0;
+                position: absolute; /* 滚筒需要绝对定位 */
+                width: 100%; top: 0; left: 0;
             }}
+            
+            /* 🔴 改动点 1: 
+               移除 .item 的默认金框
+            */
             .item {{
                 height: {item_height_px}px; 
                 line-height: {item_height_px}px;
@@ -70,26 +71,27 @@ def create_wheel_app():
                 font-weight: bold; 
                 text-align: center;
                 box-sizing: border-box; 
-                border: 1px solid #FFD700; /* 默认金色边框 */
+                
+                /* 默认边框: 1px 透明, 只有底部是虚线 (保持布局) */
+                border: 1px solid transparent;
+                border-bottom: 1px dashed #ccc;
+                
                 transition: color 0.3s ease, font-weight 0.3s ease, border 0.3s ease;
             }}
+            
+            /* (中奖样式保持不变, 字体变红, 边框匹配指示器) */
             .item.winner {{
                 color: #D90000; /* 大红色 */
                 font-weight: 900; /* 加粗 */
-                border-width: 3px;
+                border: 3px solid #FF4500; /* 匹配指示器颜色 */
             }}
             
-            /* 🔴 改动点 2: 
-               定义"选择指示器"样式
-            */
+            /* (指示器样式保持不变) */
             .selector-indicator {{
                 position: absolute; /* 绝对定位 */
                 width: calc(100% - 4px); /* 100% 减去容器的2px*2边框 */
-                
-                /* 精确居中 */
                 top: 50%; 
                 transform: translateY(-50%); 
-                
                 height: {item_height_px}px; 
                 border: 4px solid #FF4500; /* 醒目的橙红色边框 */
                 border-radius: 5px;
@@ -109,9 +111,6 @@ def create_wheel_app():
             <div class="reel" id="reel">
                 {reel_items_html}
             </div>
-            /* 🔴 改动点 3: 
-               在滚筒之后添加选择指示器
-            */
             <div class="selector-indicator"></div> 
         </div>
 
@@ -121,8 +120,13 @@ def create_wheel_app():
             if (!reel) {{ return; }} 
 
             const stopIndex = {stop_index};
-            const finalPosition = {final_position};
-            const itemHeight = {item_height_px}; // JS里也需要
+            const itemHeight = {item_height_px};
+            
+            /* 🔴 改动点 2: 
+               (Bug 修复) 确保 JS 也能获取到 container_height
+            */
+            const containerHeight = {container_height}; 
+            const finalPositionTopAligned = {final_position_top_aligned};
 
             // (阶段 1: 立即开始无限循环)
             reel.style.animation = 'spin 0.5s linear infinite';
@@ -132,8 +136,6 @@ def create_wheel_app():
                 const container = document.getElementById('slot-container');
                 const containerRect = container.getBoundingClientRect();
                 const reelRect = reel.getBoundingClientRect();
-                
-                // 计算滚筒在容器内的 Y 偏移量
                 const currentY = reelRect.top - containerRect.top;
 
                 reel.style.animation = 'none'; 
@@ -141,12 +143,17 @@ def create_wheel_app():
                 reel.style.transform = `translateY(${{currentY}}px)`;
                 reel.offsetHeight; 
 
-                // 修正 finalPosition，使中奖项居中
-                // (container_height / 2) - (itemHeight / 2) 是指示框中心到顶部的距离
-                const correctedFinalPosition = finalPosition + (container_height / 2) - (itemHeight / 2);
-
+                /* 🔴 改动点 3: 
+                   (核心) 使用正确的变量计算"完美居中"的位置
+                */
+                // (containerHeight / 2) 是容器中心
+                // (itemHeight / 2) 是奖项中心
+                // 我们需要移动滚筒，使奖项顶部位于 (中心 - 半个奖项高) 的位置
+                const centeringOffset = (containerHeight / 2) - (itemHeight / 2);
+                const finalPositionCentered = finalPositionTopAligned + centeringOffset;
+                
                 reel.style.transition = 'transform 3s ease-out'; // 3秒减速
-                reel.style.transform = `translateY(${{correctedFinalPosition}}px)`;
+                reel.style.transform = `translateY(${{finalPositionCentered}}px)`;
             }}, 2500); 
             
             // (阶段 3: 5.5秒后, 高亮中奖项)
