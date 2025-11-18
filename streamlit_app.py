@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 13 - 修复 f-string 的 '}' 语法错误)
+# (版本 14 - 修复 f-string 和 JS ${} 冲突)
 
 import streamlit as st
 import random
@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 import time
 
 def create_wheel_app():
-    st.title("🎉 幸运大转盘 (网页版) 🎉")
+    st.title("🎉 幸运大转盘 🎉")
 
     # ========== 配置 ==========
     items_config = [
@@ -58,9 +58,7 @@ def create_wheel_app():
             </div>
             """
 
-        # 🔴 修复点: 
-        #    所有 CSS/JS 的 { 和 } 都已改为 {{ 和 }}
-        #    Python 变量 {var} 保持不变
+        # (V13 的 CSS/JS { 和 } 都已改为 {{ 和 }})
         slot_machine_html = f"""
         <style>
             .slot-container {{
@@ -155,14 +153,22 @@ def create_wheel_app():
 
                 reel.style.animation = 'none'; 
                 reel.style.transition = 'none'; 
-                reel.style.transform = `translateY(${currentY}px)`;
+                
+                /* 🔴 修复点 1: 
+                   将 JS 的 ${currentY} 转义为 ${{currentY}}
+                */
+                reel.style.transform = `translateY(${{currentY}}px)`;
                 reel.offsetHeight; 
 
                 const centeringOffset = (containerHeight / 2) - (itemHeight / 2);
                 const finalPositionCentered = finalPositionTopAligned + centeringOffset;
                 
                 reel.style.transition = 'transform 3s ease-out'; 
-                reel.style.transform = `translateY(${finalPositionCentered}px)`;
+                
+                /* 🔴 修复点 2: 
+                   将 JS 的 ${finalPositionCentered} 转义为 ${{finalPositionCentered}}
+                */
+                reel.style.transform = `translateY(${{finalPositionCentered}}px)`;
             }}, 2500); 
             
             setTimeout(() => {{
@@ -192,7 +198,6 @@ def create_wheel_app():
         result_placeholder = st.empty()
         
         # 6. (Python) 等待所有动画播完
-        # 如果是神秘大奖, 等 13.5s; 否则, 只等滚筒的 5.5s
         wait_time = 13.5 if result == "神秘大奖" else 5.5
         time.sleep(wait_time) 
         
