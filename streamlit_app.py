@@ -34,7 +34,7 @@ def create_wheel_app():
     # --- 图片 URL (重要!) ---
     # 请确保这张图片在 GitHub 仓库的根目录，或者提供一个有效的公共网络链接
     # 如果图片在 GitHub 根目录，路径就是 'image.png' (或者您图片的文件名)
-    mysterious_image_url = "https://i.imgur.com/your-image-id.png" # 🔴 请替换为您的图片链接
+    mysterious_image_url = "https://github.com/qkzy6/lucky-wheel-app/edit/main/神秘大奖.png" # 🔴 请替换为您的图片链接
 
     # --- Streamlit 交互 ---
     if st.button("开始抽奖!", type="primary", use_container_width=True):
@@ -220,3 +220,4 @@ def create_wheel_app():
 # --- 程序入口 ---
 if __name__ == "__main__":
     create_wheel_app()
+
