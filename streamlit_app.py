@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 8 - "金框"高亮版)
+# (版本 9 - "全金框"版)
 
 import streamlit as st
 import random
@@ -57,37 +57,36 @@ def create_wheel_app():
             .reel {{ 
                 /* 默认无动画，JS会添加 */
             }}
+            
+            /* 🔴 改动点 1: 
+               修改 .item 的默认边框
+            */
             .item {{
                 height: {item_height_px}px; 
                 line-height: {item_height_px}px;
                 font-size: {font_size_px}px; 
                 font-weight: bold; 
                 text-align: center;
-                
-                /* 🔴 改动点 1 (A):
-                   (关键) 确保边框被计算在 70px 高度"内", 防止跳动
-                */
                 box-sizing: border-box; 
                 
-                /* 默认边框: 上/左/右 透明, 只有底部是虚线 */
-                border: 1px solid transparent;
-                border-bottom: 1px dashed #ccc; 
+                /* 默认边框: 1px 金色实线 */
+                border: 1px solid #FFD700; /* #FFD700 是金色的色号 */
                 
-                /* 🔴 改动点 1 (B): 
-                   让"边框"也参与过渡动画
-                */
+                /* (移除) 原来的 "border-bottom: 1px dashed #ccc;" */
+                
+                /* 让边框和颜色变化更平滑 */
                 transition: color 0.3s ease, font-weight 0.3s ease, border 0.3s ease;
             }}
             
             /* 🔴 改动点 2: 
-               定义 "winner" 样式 (大红色 + 金色加粗边框)
+               .winner 样式现在是"加粗"边框和"变红"字体
             */
             .item.winner {{
                 color: #D90000; /* 大红色 */
                 font-weight: 900; /* 加粗 */
                 
-                /* 覆盖掉原来的 border, 变为 3px 的金色实线 */
-                border: 3px solid #FFD700; /* #FFD700 是金色的色号 */
+                /* 边框从 1px 加粗到 3px */
+                border-width: 3px;
             }}
             
             @keyframes spin {{
@@ -103,6 +102,7 @@ def create_wheel_app():
         </div>
 
         <script>
+        /* (JS 部分与 V8 完全相同，无需改动) */
         window.onload = function() {{
             const reel = document.getElementById('reel');
             if (!reel) {{ return; }} 
@@ -110,10 +110,8 @@ def create_wheel_app():
             const stopIndex = {stop_index};
             const finalPosition = {final_position};
 
-            /* (阶段 1: 立即开始无限循环) */
             reel.style.animation = 'spin 0.5s linear infinite';
 
-            /* (阶段 2: 2.5秒后, 准备停止) */
             setTimeout(() => {{
                 const containerTop = reel.parentElement.getBoundingClientRect().top;
                 const reelTop = reel.getBoundingClientRect().top;
@@ -124,18 +122,17 @@ def create_wheel_app():
                 reel.style.transform = `translateY(${{currentY}}px)`;
                 reel.offsetHeight; 
 
-                reel.style.transition = 'transform 3s ease-out'; // 3秒减速
+                reel.style.transition = 'transform 3s ease-out'; 
                 reel.style.transform = `translateY(${{finalPosition}}px)`;
-            }}, 2500); // 2.5秒后执行"停止"
+            }}, 2500); 
             
-            /* (阶段 3: 5.5秒后, 高亮中奖项) */
             setTimeout(() => {{
                 const allItems = document.querySelectorAll('.item');
                 const winner = allItems[stopIndex];
                 if (winner) {{
                     winner.classList.add('winner');
                 }}
-            }}, 5500); // 2500 + 3000
+            }}, 5500); 
 
         }};
         </script>
