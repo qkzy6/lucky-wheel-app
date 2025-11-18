@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 7 - "高亮"中奖项)
+# (版本 8 - "金框"高亮版)
 
 import streamlit as st
 import random
@@ -63,15 +63,31 @@ def create_wheel_app():
                 font-size: {font_size_px}px; 
                 font-weight: bold; 
                 text-align: center;
-                border-bottom: 1px dashed #ccc;
-                /* 🔴 改动点 1 (A): 增加一个过渡，让颜色变化更平滑 */
-                transition: color 0.3s ease, font-weight 0.3s ease;
+                
+                /* 🔴 改动点 1 (A):
+                   (关键) 确保边框被计算在 70px 高度"内", 防止跳动
+                */
+                box-sizing: border-box; 
+                
+                /* 默认边框: 上/左/右 透明, 只有底部是虚线 */
+                border: 1px solid transparent;
+                border-bottom: 1px dashed #ccc; 
+                
+                /* 🔴 改动点 1 (B): 
+                   让"边框"也参与过渡动画
+                */
+                transition: color 0.3s ease, font-weight 0.3s ease, border 0.3s ease;
             }}
             
-            /* 🔴 改动点 1 (B): 定义 "winner" 样式 */
+            /* 🔴 改动点 2: 
+               定义 "winner" 样式 (大红色 + 金色加粗边框)
+            */
             .item.winner {{
                 color: #D90000; /* 大红色 */
                 font-weight: 900; /* 加粗 */
+                
+                /* 覆盖掉原来的 border, 变为 3px 的金色实线 */
+                border: 3px solid #FFD700; /* #FFD700 是金色的色号 */
             }}
             
             @keyframes spin {{
@@ -112,20 +128,14 @@ def create_wheel_app():
                 reel.style.transform = `translateY(${{finalPosition}}px)`;
             }}, 2500); // 2.5秒后执行"停止"
             
-            /* 🔴 改动点 2: 
-               在动画完全停止时 (2.5 + 3 = 5.5秒)
-               高亮中奖的元素
-            */
+            /* (阶段 3: 5.5秒后, 高亮中奖项) */
             setTimeout(() => {{
-                // 找到所有 item
                 const allItems = document.querySelectorAll('.item');
-                // 找到中奖的那个
                 const winner = allItems[stopIndex];
                 if (winner) {{
-                    // 给它添加 'winner' class
                     winner.classList.add('winner');
                 }}
-            }}, 5500); // 必须是 2500 + 3000
+            }}, 5500); // 2500 + 3000
 
         }};
         </script>
