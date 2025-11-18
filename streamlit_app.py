@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 14 - 修复 f-string 和 JS ${} 冲突)
+# (版本 15 - 修复由中文注释引起的 SyntaxError)
 
 import streamlit as st
 import random
@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 import time
 
 def create_wheel_app():
-    st.title("🎉 幸运大转盘 🎉")
+    st.title("🎉 幸运大转盘 (网页版) 🎉")
 
     # ========== 配置 ==========
     items_config = [
@@ -58,7 +58,7 @@ def create_wheel_app():
             </div>
             """
 
-        # (V13 的 CSS/JS { 和 } 都已改为 {{ 和 }})
+        # (V14 的 CSS/JS { 和 } 都已改为 {{ 和 }})
         slot_machine_html = f"""
         <style>
             .slot-container {{
@@ -154,9 +154,7 @@ def create_wheel_app():
                 reel.style.animation = 'none'; 
                 reel.style.transition = 'none'; 
                 
-                /* 🔴 修复点 1: 
-                   将 JS 的 ${currentY} 转义为 ${{currentY}}
-                */
+                /* 🔴 修复点: (V14) 确保 ${{}} 被正确转义 */
                 reel.style.transform = `translateY(${{currentY}}px)`;
                 reel.offsetHeight; 
 
@@ -165,9 +163,7 @@ def create_wheel_app():
                 
                 reel.style.transition = 'transform 3s ease-out'; 
                 
-                /* 🔴 修复点 2: 
-                   将 JS 的 ${finalPositionCentered} 转义为 ${{finalPositionCentered}}
-                */
+                /* 🔴 修复点: (V14) 确保 ${{}} 被正确转义 */
                 reel.style.transform = `translateY(${{finalPositionCentered}}px)`;
             }}, 2500); 
             
