@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 9 - "全金框"版)
+# (版本 10 - "选择指示器"版)
 
 import streamlit as st
 import random
@@ -39,8 +39,10 @@ def create_wheel_app():
         result = items_config[chosen_base_index][0]
         
         stop_index = (base_len * 2) + chosen_base_index
-        centering_offset = (item_height_px * (visible_items - 1) / 2)
-        final_position = -((stop_index * item_height_px) - centering_offset)
+        
+        # 计算 JS 最终需要停止的位置
+        # 注意这里我们不再需要 centering_offset，因为指示框会处理居中
+        final_position = -(stop_index * item_height_px) 
 
         # --- HTML/CSS/JS ---
         reel_items_html = ""
@@ -53,14 +55,14 @@ def create_wheel_app():
                 width: 100%; height: {container_height}px;
                 overflow: hidden; border: 2px solid #444; border-radius: 5px;
                 background: #f9f9f9; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+                position: relative; /* 🔴 改动点 1 (A): 容器需要相对定位 */
             }}
             .reel {{ 
-                /* 默认无动画，JS会添加 */
+                position: absolute; /* 🔴 改动点 1 (B): 滚筒需要绝对定位 */
+                width: 100%;
+                top: 0;
+                left: 0;
             }}
-            
-            /* 🔴 改动点 1: 
-               修改 .item 的默认边框
-            */
             .item {{
                 height: {item_height_px}px; 
                 line-height: {item_height_px}px;
@@ -68,25 +70,33 @@ def create_wheel_app():
                 font-weight: bold; 
                 text-align: center;
                 box-sizing: border-box; 
-                
-                /* 默认边框: 1px 金色实线 */
-                border: 1px solid #FFD700; /* #FFD700 是金色的色号 */
-                
-                /* (移除) 原来的 "border-bottom: 1px dashed #ccc;" */
-                
-                /* 让边框和颜色变化更平滑 */
+                border: 1px solid #FFD700; /* 默认金色边框 */
                 transition: color 0.3s ease, font-weight 0.3s ease, border 0.3s ease;
             }}
-            
-            /* 🔴 改动点 2: 
-               .winner 样式现在是"加粗"边框和"变红"字体
-            */
             .item.winner {{
                 color: #D90000; /* 大红色 */
                 font-weight: 900; /* 加粗 */
-                
-                /* 边框从 1px 加粗到 3px */
                 border-width: 3px;
+            }}
+            
+            /* 🔴 改动点 2: 
+               定义"选择指示器"样式
+            */
+            .selector-indicator {{
+                position: absolute; /* 绝对定位 */
+                width: calc(100% - 4px); /* 100% 减去容器的2px*2边框 */
+                
+                /* 精确居中 */
+                top: 50%; 
+                transform: translateY(-50%); 
+                
+                height: {item_height_px}px; 
+                border: 4px solid #FF4500; /* 醒目的橙红色边框 */
+                border-radius: 5px;
+                z-index: 10; /* 确保它在滚筒之上 */
+                pointer-events: none; /* 不会影响鼠标事件 */
+                box-sizing: border-box;
+                box-shadow: 0 0 15px rgba(255, 69, 0, 0.7); /* 发光效果 */
             }}
             
             @keyframes spin {{
@@ -99,33 +109,47 @@ def create_wheel_app():
             <div class="reel" id="reel">
                 {reel_items_html}
             </div>
+            /* 🔴 改动点 3: 
+               在滚筒之后添加选择指示器
+            */
+            <div class="selector-indicator"></div> 
         </div>
 
         <script>
-        /* (JS 部分与 V8 完全相同，无需改动) */
         window.onload = function() {{
             const reel = document.getElementById('reel');
             if (!reel) {{ return; }} 
 
             const stopIndex = {stop_index};
             const finalPosition = {final_position};
+            const itemHeight = {item_height_px}; // JS里也需要
 
+            // (阶段 1: 立即开始无限循环)
             reel.style.animation = 'spin 0.5s linear infinite';
 
+            // (阶段 2: 2.5秒后, 准备停止)
             setTimeout(() => {{
-                const containerTop = reel.parentElement.getBoundingClientRect().top;
-                const reelTop = reel.getBoundingClientRect().top;
-                const currentY = reelTop - containerTop;
+                const container = document.getElementById('slot-container');
+                const containerRect = container.getBoundingClientRect();
+                const reelRect = reel.getBoundingClientRect();
+                
+                // 计算滚筒在容器内的 Y 偏移量
+                const currentY = reelRect.top - containerRect.top;
 
                 reel.style.animation = 'none'; 
                 reel.style.transition = 'none'; 
                 reel.style.transform = `translateY(${{currentY}}px)`;
                 reel.offsetHeight; 
 
-                reel.style.transition = 'transform 3s ease-out'; 
-                reel.style.transform = `translateY(${{finalPosition}}px)`;
+                // 修正 finalPosition，使中奖项居中
+                // (container_height / 2) - (itemHeight / 2) 是指示框中心到顶部的距离
+                const correctedFinalPosition = finalPosition + (container_height / 2) - (itemHeight / 2);
+
+                reel.style.transition = 'transform 3s ease-out'; // 3秒减速
+                reel.style.transform = `translateY(${{correctedFinalPosition}}px)`;
             }}, 2500); 
             
+            // (阶段 3: 5.5秒后, 高亮中奖项)
             setTimeout(() => {{
                 const allItems = document.querySelectorAll('.item');
                 const winner = allItems[stopIndex];
