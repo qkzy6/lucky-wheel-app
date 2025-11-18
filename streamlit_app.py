@@ -1,5 +1,5 @@
 # streamlit_app.py
-# (版本 11 - 移除默认金框, 完美居中)
+# (版本 12 - 神秘大奖动画版)
 
 import streamlit as st
 import random
@@ -30,6 +30,11 @@ def create_wheel_app():
     visible_items = 3  
     container_height = item_height_px * visible_items 
     one_loop_height = base_len * item_height_px
+    
+    # --- 图片 URL (重要!) ---
+    # 请确保这张图片在 GitHub 仓库的根目录，或者提供一个有效的公共网络链接
+    # 如果图片在 GitHub 根目录，路径就是 'image.png' (或者您图片的文件名)
+    mysterious_image_url = "https://i.imgur.com/your-image-id.png" # 🔴 请替换为您的图片链接
 
     # --- Streamlit 交互 ---
     if st.button("开始抽奖!", type="primary", use_container_width=True):
@@ -39,8 +44,6 @@ def create_wheel_app():
         result = items_config[chosen_base_index][0]
         
         stop_index = (base_len * 2) + chosen_base_index
-        
-        # (Python) 计算 JS 最终需要停止的位置 (对齐顶部)
         final_position_top_aligned = -(stop_index * item_height_px) 
 
         # --- HTML/CSS/JS ---
@@ -48,22 +51,26 @@ def create_wheel_app():
         for label in labels:
             reel_items_html += f'<div class="item">{label}</div>'
 
+        # 🔴 新增: 神秘大奖图片容器
+        mystery_image_html = ""
+        if result == "神秘大奖":
+            mystery_image_html = f"""
+            <div id="mystery-image-container" class="mystery-image-container">
+                <img src="{mysterious_image_url}" alt="神秘大奖" class="mystery-image">
+            </div>
+            """
+
         slot_machine_html = f"""
         <style>
             .slot-container {{
                 width: 100%; height: {container_height}px;
                 overflow: hidden; border: 2px solid #444; border-radius: 5px;
                 background: #f9f9f9; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-                position: relative; /* 容器需要相对定位 */
+                position: relative; 
             }}
             .reel {{ 
-                position: absolute; /* 滚筒需要绝对定位 */
-                width: 100%; top: 0; left: 0;
+                position: absolute; width: 100%; top: 0; left: 0;
             }}
-            
-            /* 🔴 改动点 1: 
-               移除 .item 的默认金框
-            */
             .item {{
                 height: {item_height_px}px; 
                 line-height: {item_height_px}px;
@@ -71,40 +78,63 @@ def create_wheel_app():
                 font-weight: bold; 
                 text-align: center;
                 box-sizing: border-box; 
-                
-                /* 默认边框: 1px 透明, 只有底部是虚线 (保持布局) */
-                border: 1px solid transparent;
-                border-bottom: 1px dashed #ccc;
-                
+                border: 1px solid transparent; border-bottom: 1px dashed #ccc;
                 transition: color 0.3s ease, font-weight 0.3s ease, border 0.3s ease;
             }}
-            
-            /* (中奖样式保持不变, 字体变红, 边框匹配指示器) */
             .item.winner {{
-                color: #D90000; /* 大红色 */
-                font-weight: 900; /* 加粗 */
-                border: 3px solid #FF4500; /* 匹配指示器颜色 */
+                color: #D90000; font-weight: 900; border: 3px solid #FF4500;
             }}
-            
-            /* (指示器样式保持不变) */
             .selector-indicator {{
-                position: absolute; /* 绝对定位 */
-                width: calc(100% - 4px); /* 100% 减去容器的2px*2边框 */
-                top: 50%; 
-                transform: translateY(-50%); 
+                position: absolute; width: calc(100% - 4px); 
+                top: 50%; transform: translateY(-50%); 
                 height: {item_height_px}px; 
-                border: 4px solid #FF4500; /* 醒目的橙红色边框 */
-                border-radius: 5px;
-                z-index: 10; /* 确保它在滚筒之上 */
-                pointer-events: none; /* 不会影响鼠标事件 */
-                box-sizing: border-box;
-                box-shadow: 0 0 15px rgba(255, 69, 0, 0.7); /* 发光效果 */
+                border: 4px solid #FF4500; border-radius: 5px;
+                z-index: 10; pointer-events: none; box-sizing: border-box;
+                box-shadow: 0 0 15px rgba(255, 69, 0, 0.7); 
             }}
             
             @keyframes spin {{
                 0% {{ transform: translateY(0); }}
                 100% {{ transform: translateY(-{one_loop_height}px); }}
             }}
+
+            /* 🔴 新增 CSS: 神秘大奖图片动画 */
+            .mystery-image-container {{
+                position: fixed; /* 固定在视口 */
+                top: -100vh; /* 初始位置: 完全在屏幕上方 */
+                left: 0;
+                width: 100vw; /* 宽度填满屏幕 */
+                height: 100vh; /* 高度填满屏幕 */
+                display: flex; /* 弹性布局居中图片 */
+                justify-content: center;
+                align-items: center;
+                background: rgba(0,0,0,0.8); /* 半透明黑色背景 */
+                z-index: 1000; /* 确保在最顶层 */
+                opacity: 0; /* 初始透明度为0 */
+                visibility: hidden; /* 初始不可见 */
+                transition: opacity 0.5s ease-in-out; /* 透明度渐变 */
+            }}
+            .mystery-image-container.active {{
+                animation: slide-in-out 8s forwards; /* 8秒动画 */
+                opacity: 1;
+                visibility: visible;
+            }}
+            .mystery-image {{
+                max-width: 90%; /* 图片最大宽度 */
+                max-height: 90%; /* 图片最大高度 */
+                object-fit: contain; /* 保持图片比例 */
+                border: 5px solid gold; /* 金色边框 */
+                box-shadow: 0 0 50px rgba(255,215,0,0.8); /* 金色发光 */
+            }}
+
+            @keyframes slide-in-out {{
+                0% {{ top: -100vh; opacity: 0; }} /* 开始: 完全在上方, 透明 */
+                10% {{ top: 0vh; opacity: 1; }} /* 1秒内出现, 下滑到顶部 */
+                60% {{ top: 0vh; opacity: 1; }} /* 停留5秒 */
+                70% {{ top: -100vh; opacity: 0; }} /* 1秒内消失, 上滑 */
+                100% {{ top: -100vh; opacity: 0; visibility: hidden; }} /* 结束: 完全消失 */
+            }}
+
         </style>
 
         <div class="slot-container" id="slot-container">
@@ -113,6 +143,8 @@ def create_wheel_app():
             </div>
             <div class="selector-indicator"></div> 
         </div>
+        
+        {mystery_image_html} /* 🔴 新增: 将图片 HTML 放在这里 */
 
         <script>
         window.onload = function() {{
@@ -121,17 +153,11 @@ def create_wheel_app():
 
             const stopIndex = {stop_index};
             const itemHeight = {item_height_px};
-            
-            /* 🔴 改动点 2: 
-               (Bug 修复) 确保 JS 也能获取到 container_height
-            */
             const containerHeight = {container_height}; 
             const finalPositionTopAligned = {final_position_top_aligned};
 
-            // (阶段 1: 立即开始无限循环)
             reel.style.animation = 'spin 0.5s linear infinite';
 
-            // (阶段 2: 2.5秒后, 准备停止)
             setTimeout(() => {{
                 const container = document.getElementById('slot-container');
                 const containerRect = container.getBoundingClientRect();
@@ -143,28 +169,33 @@ def create_wheel_app():
                 reel.style.transform = `translateY(${{currentY}}px)`;
                 reel.offsetHeight; 
 
-                /* 🔴 改动点 3: 
-                   (核心) 使用正确的变量计算"完美居中"的位置
-                */
-                // (containerHeight / 2) 是容器中心
-                // (itemHeight / 2) 是奖项中心
-                // 我们需要移动滚筒，使奖项顶部位于 (中心 - 半个奖项高) 的位置
                 const centeringOffset = (containerHeight / 2) - (itemHeight / 2);
                 const finalPositionCentered = finalPositionTopAligned + centeringOffset;
                 
-                reel.style.transition = 'transform 3s ease-out'; // 3秒减速
+                reel.style.transition = 'transform 3s ease-out'; 
                 reel.style.transform = `translateY(${{finalPositionCentered}}px)`;
             }}, 2500); 
             
-            // (阶段 3: 5.5秒后, 高亮中奖项)
             setTimeout(() => {{
                 const allItems = document.querySelectorAll('.item');
                 const winner = allItems[stopIndex];
                 if (winner) {{
                     winner.classList.add('winner');
-                }}
-            }}, 5500); 
+                }
 
+                // 🔴 新增: 如果是神秘大奖, 触发图片动画
+                if ("{result}" === "神秘大奖") {{
+                    const mysteryImageContainer = document.getElementById('mystery-image-container');
+                    if (mysteryImageContainer) {{
+                        mysteryImageContainer.classList.add('active'); // 激活动画
+                    }}
+                }}
+
+            }}, 5500); // 滚筒停止并高亮
+            
+            // 🔴 新增: 图片动画总时长大约 8 秒，所以最终结果文字要延迟显示
+            // 滚筒停止 (5.5s) + 图片动画 (8s) = 13.5s
+            // Python的 sleep 必须与这个总时长匹配
         }};
         </script>
         """
@@ -175,8 +206,8 @@ def create_wheel_app():
         # 5. (Streamlit) 在组件下方显示最终结果
         result_placeholder = st.empty()
         
-        # 6. (Python) 等待动画播完 (2.5 + 3 = 5.5秒)
-        time.sleep(5.5) 
+        # 6. (Python) 等待所有动画播完 (滚筒 5.5s + 图片 8s = 13.5s)
+        time.sleep(13.5) # 🔴 调整总等待时间
         
         result_placeholder.success(f"恭喜！您抽中了： {result}")
 
