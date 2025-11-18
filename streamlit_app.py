@@ -33,7 +33,7 @@ def create_wheel_app():
     
     # --- 图片 URL (重要!) ---
     # 🔴 请替换为您的图片链接
-    mysterious_image_url = "https://github.com/qkzy6/lucky-wheel-app/edit/main/神秘大奖.png" 
+    mysterious_image_url = "https://raw.githubusercontent.com/qkzy6/lucky-wheel-app/main/神秘大奖.png" 
 
     # --- Streamlit 交互 ---
     if st.button("开始抽奖!", type="primary", use_container_width=True):
@@ -208,3 +208,4 @@ def create_wheel_app():
 # --- 程序入口 ---
 if __name__ == "__main__":
     create_wheel_app()
+
