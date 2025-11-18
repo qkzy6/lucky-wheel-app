@@ -16,7 +16,7 @@ def create_wheel_app():
         ("20积分",   10),   
         ("50积分",   10),   
         ("100积分",   5),   
-        ("神秘大奖",  100),   
+        ("神秘大奖",  300),   
     ]
     items_list = items_config * 5 
     labels = [item[0] for item in items_list]
